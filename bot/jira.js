@@ -1,5 +1,5 @@
 var env = require('node-env-file')
-env(__dirname + '/../.env')
+env(__dirname + '/.env')
 
 // ***************************
 // *         JIRA            *
@@ -52,10 +52,10 @@ async function getRecentlyCreated (lastUpdate, project = 'LXL') {
   }
 }
 
-async function getRecentlyUpdated (lastUpdate, project = 'LXL') {
-  const jql = `project = LXL AND status changed TO "Done" AFTER "${lastUpdate}"`
+async function getRecentlyUpdated (checkTime, project = 'LXL') {
+  const jql = `project = LXL AND status changed ON "${checkTime}" TO "Done"`
   myLog('[JIRA] Querying with JQL:', jql)
-  const url = `https://jira.kb.se/rest/api/2/search?expand=changelog&fields=updated,key,issuetype,status&jql=${encodeURI(jql)}`
+  const url = `https://jira.kb.se/rest/api/2/search?fields=updated,key,created,issuetype,status&jql=${encodeURI(jql)}`
   try {
     const response = await axios.get(
       url,
