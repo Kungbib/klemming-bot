@@ -2,7 +2,7 @@ const { driver } = require('@rocket.chat/sdk');
 const moment = require('moment')
 const respmap  = require('./reply');
 const jira = require('./jira')
-const myLog = require('./log.js')
+const timedLog = require('./log.js')
 const getRecentlyUpdated = require('./jira.js').getRecentlyUpdated
 const getRecentlyCreated = require('./jira.js').getRecentlyCreated
 const fetchTicket = require('./jira.js').fetchTicket
@@ -59,7 +59,7 @@ let reportBuffer = {
 }
 function resetBuffer (key) {
   if (reportBuffer.hasOwnProperty(key)) {
-    myLog('[JIRA]', 'Resetting buffer for key:', key)
+    timedLog('[JIRA]', 'Resetting buffer for key:', key)
     reportBuffer[key] = {}
   } else {
     throw new Error('Key not available in reportBuffer')
@@ -80,11 +80,11 @@ const postStatusUpdates = (driver, interval) => {
     .then( async (data) => {
       const issues = data.issuess
       if (issues && issues.length > 0) {
-        myLog('[JIRA] Change detected, output below')
+        timedLog('[JIRA] Change detected, output below')
         let alreadyReported = 0
         for (let i = 0; i < issues.length; i++) {
           if (reportBuffer.status.hasOwnProperty(issues[i].key) === false) {
-            myLog('[JIRA] [Ticket status]', issues[i].key, 'was set to', issues[i].fields.status.name);
+            timedLog('[JIRA] [Ticket status]', issues[i].key, 'was set to', issues[i].fields.status.name);
             reportBuffer.status[issues[i].key] = issues[i]
             // const created = moment(issues[i].fields.created)
             // console.log(created)
@@ -105,10 +105,10 @@ const postStatusUpdates = (driver, interval) => {
           }
         }
         if (alreadyReported !== 0) {
-          myLog(`Already reported ${alreadyReported} status changes, skipping.`)
+          timedLog(`Already reported ${alreadyReported} status changes, skipping.`)
         }
       } else {
-        myLog('[JIRA] No changed statuses to "Done" detected since:', lastStatusUpdate)
+        timedLog('[JIRA] No changed statuses to "Done" detected since:', lastStatusUpdate)
       }
       lastStatusUpdate = checkTime
     })

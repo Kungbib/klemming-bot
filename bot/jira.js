@@ -7,10 +7,10 @@ env(__dirname + '/.env')
       
 const axios = require('axios').default
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
-const myLog = require('./log.js')
+const timedLog = require('./log.js')
 
 async function fetchTicket (issueNumber) {
-  myLog('[JIRA]', 'Fetching ticket', issueNumber)
+  timedLog('[JIRA]', 'Fetching ticket', issueNumber)
   const url = `https://jira.kb.se/rest/api/2/issue/${issueNumber}?expand=&fields=*all&properties=*all&fieldsByKeys=false`
   try {
     const response = await axios.get(
@@ -22,7 +22,7 @@ async function fetchTicket (issueNumber) {
         }
       }
     )
-    myLog('[JIRA]', 'Successful fetch:', issueNumber)
+    timedLog('[JIRA]', 'Successful fetch:', issueNumber)
     return response.data
   } catch (error) {
     console.error('[JIRA]', 'Failed to fetch:', issueNumber, error)
@@ -32,7 +32,7 @@ async function fetchTicket (issueNumber) {
 
 async function getRecentlyCreated (lastUpdate, project = 'LXL') {
   const jql = `project = LXL AND created > "${lastUpdate}"`
-  myLog('[JIRA] Querying with JQL:', jql)
+  timedLog('[JIRA] Querying with JQL:', jql)
   const url = `https://jira.kb.se/rest/api/2/search?expand=changelog&fields=updated,key,issuetype,creator,status&jql=${encodeURI(jql)}`
   try {
     const response = await axios.get(
@@ -44,7 +44,7 @@ async function getRecentlyCreated (lastUpdate, project = 'LXL') {
         }
       }
     )
-    myLog('[JIRA]', 'Successfully fetched recently created for project:', project)
+    timedLog('[JIRA]', 'Successfully fetched recently created for project:', project)
     return response.data
   } catch (error) {
     console.error('[JIRA]', 'Failed to fetch recently created for project:', project, error)
@@ -54,7 +54,7 @@ async function getRecentlyCreated (lastUpdate, project = 'LXL') {
 
 async function getRecentlyUpdated (checkTime, project = 'LXL') {
   const jql = `project = LXL AND status changed ON "${checkTime}" TO "Done"`
-  myLog('[JIRA] Querying with JQL:', jql)
+  timedLog('[JIRA] Querying with JQL:', jql)
   const url = `https://jira.kb.se/rest/api/2/search?fields=updated,key,created,issuetype,status&jql=${encodeURI(jql)}`
   try {
     const response = await axios.get(
@@ -66,7 +66,7 @@ async function getRecentlyUpdated (checkTime, project = 'LXL') {
         }
       }
     )
-    myLog('[JIRA]', 'Successfully fetched recently updated for project:', project)
+    timedLog('[JIRA]', 'Successfully fetched recently updated for project:', project)
     return response.data
   } catch (error) {
     console.error('[JIRA]', 'Failed to fetch recently updated for project:', project, error)
