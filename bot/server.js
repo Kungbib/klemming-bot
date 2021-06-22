@@ -86,17 +86,12 @@ const postStatusUpdates = (driver, interval) => {
           if (reportBuffer.status.hasOwnProperty(issues[i].key) === false) {
             timedLog('[JIRA] [Ticket status]', issues[i].key, 'was set to', issues[i].fields.status.name);
             reportBuffer.status[issues[i].key] = issues[i]
-            // const created = moment(issues[i].fields.created)
-            // console.log(created)
-            // const now = moment()
-            // console.log(now)
-            // const duration = moment.duration(now.diff(created)).as('days')
             const link = `${process.env.JIRA_PROTOCOL}://${process.env.JIRA_HOST}/browse/${data.key}`
             const response = {};
             response.attachments = [{
-              title: `DONE: ${issues[i].key}: ${issues[i].fields.summary}`,
+              title: `:partying_face: TICKET DONE: ${issues[i].key}`,
+              text: `${issues[i].fields.summary}`,
               title_link: link,
-              // text: `Completed after ${Math.floor(duration)} days`
             }]
             const msg = `${issues[i].key} was set to ${ issues[i].fields.status.name}`;
             const sent = await driver.sendToRoom(response, ROOMS[0])
@@ -105,12 +100,15 @@ const postStatusUpdates = (driver, interval) => {
           }
         }
         if (alreadyReported !== 0) {
-          timedLog(`Already reported ${alreadyReported} status changes, skipping.`)
+          timedLog('[JIRA]', `Already reported ${alreadyReported} status changes, skipping.`)
         }
       } else {
-        timedLog('[JIRA] No changed statuses to "Done" detected since:', lastStatusUpdate)
+        timedLog('[JIRA]', 'No changed statuses to "Done" detected at', lastStatusUpdate)
       }
       lastStatusUpdate = checkTime
+    })
+    .catch((error) => {
+      timedLog('[JIRA]', 'Error fetching recently updated.', error);
     })
 };
 
@@ -120,23 +118,31 @@ if (!err) {
     if (message.u._id === myUserId) return;
     const roomname = await driver.getRoomName(message.rid);
 
-    console.log('got message ' + message.msg)
+    timedLog(`Got a message`, message.msg)
     var response = {};
     // new RegExp(/LXL-[0-9]+/g)
     if (message.msg.match(new RegExp(/LXL-[0-9]+/g))) {
-      const data = await fetchTicket(message.msg)
-      console.log(data)
-      const link = `${process.env.JIRA_PROTOCOL}://${process.env.JIRA_HOST}/browse/${data.key}`
-      response.attachments = [{
-        title: `${data.key}: ${data.fields.summary}`,
-        title_link: link,
-        thumb_url: data.fields.priority.iconUrl,
-        text: `Status: ${data.fields.status.name}\nAssignee: ${data.fields.assignee.displayName}`
-      }]
+      let data;
+      try {
+        data = await fetchTicket(message.msg);
+      } catch (e) {
+        timedLog(`Failed to fetch ${message.msg}`, e);
+      }
+      if (data) {
+        const link = `${process.env.JIRA_PROTOCOL}://${process.env.JIRA_HOST}/browse/${data.key}`
+        response.attachments = [{
+          title: `${data.key}: ${data.fields.summary}`,
+          title_link: link,
+          thumb_url: data.fields.priority.iconUrl,
+          text: `Status: ${data.fields.status.name}\nAssignee: ${data.fields.assignee.displayName}`
+        }]
+      } else {
+        // response = `Couldn't find ticket with key **${message.msg}**`;
+      }
     } else if (message.msg in respmap) {
         response = respmap[message.msg];
     }
-    if (Object.keys(response).length !== 0) {
+    if (response && (Object.keys(response).length !== 0 || response.length > 0)) {
       const sentmsg = await driver.sendToRoomId(response, message.rid)
     }
   }

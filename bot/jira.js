@@ -10,7 +10,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 const timedLog = require('./log.js')
 
 async function fetchTicket (issueNumber) {
-  timedLog('[JIRA]', 'Fetching ticket', issueNumber)
+  timedLog('[JIRA]', `Fetching ticket ${issueNumber}, waiting for response...`)
   const url = `https://jira.kb.se/rest/api/2/issue/${issueNumber}?expand=&fields=*all&properties=*all&fieldsByKeys=false`
   try {
     const response = await axios.get(
@@ -25,8 +25,7 @@ async function fetchTicket (issueNumber) {
     timedLog('[JIRA]', 'Successful fetch:', issueNumber)
     return response.data
   } catch (error) {
-    console.error('[JIRA]', 'Failed to fetch:', issueNumber, error)
-    return error
+    timedLog('[JIRA]', `Failed to fetch ${issueNumber}. Reason: ${error.response.status}`);
   }
 }
 
